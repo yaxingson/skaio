@@ -1,4 +1,4 @@
-import minimist from 'minimist'
+import minimist, { type ParsedArgs }  from 'minimist'
 import { readFile } from 'node:fs/promises'
 import util from 'node:util'
 import { createInterface } from 'node:readline/promises'
@@ -8,15 +8,18 @@ import * as dotenv from 'dotenv'
 
 dotenv.config({ quiet:true })
 
-const client = new OpenAI()
-
-const r1 = createInterface({ 
-  input:process.stdin, 
-  output:process.stdout,
-  terminal:false,
+const client = new OpenAI({
+  apiKey:process.env['OPENAI_API_KEY'],
+  baseURL:process.env['OPENAI_BASE_URL']
 })
 
-const available_models = [
+const availableMcpServerRegistries = [
+  'https://mcp.so',
+  'https://mcpservers.org',
+  'https://www.pulsemcp.com',
+]
+
+const availableModels = [
   {
     name:'gpt-3.5-turbo',
     provider:'openai',
@@ -43,7 +46,7 @@ const options = [
   {
     name:'--version',
     alias: '-v',
-    description:'Display the current version number of skaio (also -v).'
+    description:'Display the current version number.'
   },
   {
     name:'--help',
@@ -56,8 +59,9 @@ const subCommands = [
   {
     name:'list',
     description:'List the currently available large language models and their providers.',
+    options:[],
     action() {
-      console.log('\n' + available_models.map(model=>`${model.name.padEnd(20, ' ')}${model.provider}`).join('\n'))
+      console.log('\n' + availableModels.map(model=>`${model.name.padEnd(20, ' ')}${model.provider}`).join('\n'))
     }
   },
   {
@@ -75,6 +79,12 @@ const subCommands = [
       const { interactive=false } = options
       
       if (interactive) {
+        const r1 = createInterface({ 
+          input:process.stdin, 
+          output:process.stdout,
+          terminal:false,
+        })
+
         while (true) {
           const userInput = await r1.question('>>> ')
           if (/^(quit|exit)$/.test(userInput)) {
@@ -86,6 +96,36 @@ const subCommands = [
         }
       }
     }
+  },
+  {
+    name:'config',
+    description:'Manage the npm configuration info.',
+    arguments:['<get|set|list>'],
+    options:[
+
+    ]
+  },
+  {
+    name:'add',
+    description:'Add a language model.',
+    options:[
+      {
+        name:'--model',
+        alias:'-m',
+        description:'Language model name.'
+      },
+      {
+        name:'--provider',
+        alias:'-p',
+        description:'Language model provider vendors, such as openai, anthropic and google.'
+      },
+    ]
+  },
+  {
+    name:'show',
+    description:'Display detailed information of the specified language model.',
+    arguments:['<model>'],
+    options:[]
   }
 ]
 
@@ -101,8 +141,10 @@ ${options.map(opt=>`${opt.alias}, ${opt.name}`.padEnd(20, ' ') + opt.description
 Commands:
 
 ${subCommands.map(
-  subCommand=>`${subCommand.name} ${subCommand.arguments ? subCommand.arguments.join(' ') : ''}`.padEnd(20, ' ') + subCommand.description +
-  subCommand.options?.map(opt=>`\n ${opt.alias}, ${opt.name}`.padEnd(21, ' ') + opt.description).join('\n')
+  subCommand=>`${subCommand.name} ${subCommand.arguments ? subCommand.arguments.join(' ') : ''}`.padEnd(30, ' ') + subCommand.description +
+  (subCommand.options.length 
+  ? '\n' + subCommand.options.map(opt=>` ${opt.alias}, ${opt.name}`.padEnd(30, ' ') + opt.description).join('\n')
+  : '')
 ).join('\n')}
 
 `

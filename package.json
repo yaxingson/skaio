@@ -6,7 +6,8 @@
     "skaio": "bin/cli.js"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "postinstall": "node scripts/init-config.mjs"
   },
   "keywords": [],
   "author": "yaxingson <3228891558@qq.com>",
@@ -19,6 +20,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
     "global": "link:C:/Users/孙光凯/AppData/Local/pnpm/global/5/node_modules/global",
     "minimist": "^1.2.8",
     "openai": "^5.11.0",

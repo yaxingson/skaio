@@ -429,13 +429,11 @@ var version = "1.0.0";
 var import_openai = require("openai");
 var dotenv = __toESM(require_main());
 dotenv.config({ quiet: true });
-var client = new import_openai.OpenAI();
-var r1 = (0, import_promises.createInterface)({
-  input: process.stdin,
-  output: process.stdout,
-  terminal: false
+var client = new import_openai.OpenAI({
+  apiKey: process.env["OPENAI_API_KEY"],
+  baseURL: process.env["OPENAI_BASE_URL"]
 });
-var available_models = [
+var availableModels = [
   {
     name: "gpt-3.5-turbo",
     provider: "openai"
@@ -461,7 +459,7 @@ var options = [
   {
     name: "--version",
     alias: "-v",
-    description: "Display the current version number of skaio (also -v)."
+    description: "Display the current version number."
   },
   {
     name: "--help",
@@ -473,8 +471,9 @@ var subCommands = [
   {
     name: "list",
     description: "List the currently available large language models and their providers.",
+    options: [],
     action() {
-      console.log("\n" + available_models.map((model) => `${model.name.padEnd(20, " ")}${model.provider}`).join("\n"));
+      console.log("\n" + availableModels.map((model) => `${model.name.padEnd(20, " ")}${model.provider}`).join("\n"));
     }
   },
   {
@@ -491,6 +490,11 @@ var subCommands = [
     async action(model, options2) {
       const { interactive = false } = options2;
       if (interactive) {
+        const r1 = (0, import_promises.createInterface)({
+          input: process.stdin,
+          output: process.stdout,
+          terminal: false
+        });
         while (true) {
           const userInput = await r1.question(">>> ");
           if (/^(quit|exit)$/.test(userInput)) {
@@ -502,6 +506,34 @@ var subCommands = [
         }
       }
     }
+  },
+  {
+    name: "config",
+    description: "Manage the npm configuration info.",
+    arguments: ["<get|set|list>"],
+    options: []
+  },
+  {
+    name: "add",
+    description: "Add a language model.",
+    options: [
+      {
+        name: "--model",
+        alias: "-m",
+        description: "Language model name."
+      },
+      {
+        name: "--provider",
+        alias: "-p",
+        description: "Language model provider vendors, such as openai, anthropic and google."
+      }
+    ]
+  },
+  {
+    name: "show",
+    description: "Display detailed information of the specified language model.",
+    arguments: ["<model>"],
+    options: []
   }
 ];
 var helpInfo = `
@@ -516,11 +548,7 @@ ${options.map((opt) => `${opt.alias}, ${opt.name}`.padEnd(20, " ") + opt.descrip
 Commands:
 
 ${subCommands.map(
-  (subCommand) => {
-    var _a;
-    return `${subCommand.name} ${subCommand.arguments ? subCommand.arguments.join(" ") : ""}`.padEnd(20, " ") + subCommand.description + ((_a = subCommand.options) == null ? void 0 : _a.map((opt) => `
- ${opt.alias}, ${opt.name}`.padEnd(21, " ") + opt.description).join("\n"));
-  }
+  (subCommand) => `${subCommand.name} ${subCommand.arguments ? subCommand.arguments.join(" ") : ""}`.padEnd(30, " ") + subCommand.description + (subCommand.options.length ? "\n" + subCommand.options.map((opt) => ` ${opt.alias}, ${opt.name}`.padEnd(30, " ") + opt.description).join("\n") : "")
 ).join("\n")}
 
 `;
